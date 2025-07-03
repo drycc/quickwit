@@ -8,7 +8,7 @@ PLATFORM ?= linux/amd64,linux/arm64
 
 include versioning.mk
 
-SHELL_SCRIPTS = $(wildcard rootfs/bin/*)
+SHELL_SCRIPTS = $(wildcard rootfs/usr/local/bin/*)
 DEV_ENV_IMAGE := ${DEV_REGISTRY}/drycc/go-dev
 DEV_ENV_CMD := podman run --rm -v ${CURDIR}:${CURDIR} -w ${CURDIR} ${DEV_ENV_IMAGE}
 
