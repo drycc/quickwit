@@ -71,7 +71,8 @@ spec:
       - name: quickwit-config
         configMap:
           name: quickwit-config
-      name: quickwit-searcher-data
+      - name: quickwit-metastore-data
+        emptyDir: {}
   {{- if .Values.searcher.persistence.enabled }}
   volumeClaimTemplates:
   - metadata:

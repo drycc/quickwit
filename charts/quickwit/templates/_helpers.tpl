@@ -1,6 +1,6 @@
 {{/* Generate quickwit envs */}}
 {{- define "quickwit.envs" }}
-envs:
+env:
 - name: NAMESPACE
   valueFrom:
     fieldRef:
