@@ -1,0 +1,145 @@
+imageOrg: "drycc"
+imagePullPolicy: "Always"
+imageTag: "canary"
+imageRegistry: "registry.drycc.cc"
+
+## Enable diagnostic mode in the deployment
+##
+diagnosticMode:
+  ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+  ##
+  enabled: false
+  ## @param diagnosticMode.command Command to override all containers in the deployment
+  ##
+  command:
+    - sleep
+  ## @param diagnosticMode.args Args to override all containers in the deployment
+  ##
+  args:
+    - infinity
+
+# log index config
+logIndexPrefix: logs-
+logIndexRetention: "30 days"
+
+# databaseUrl are will no longer use the built-in database component
+databaseUrl: ""
+# The following parameters will no longer use the built-in storage component.
+storageLookup: ""
+storageBucket: ""
+storageEndpoint: ""
+storageAccesskey: ""
+storageSecretkey: ""
+
+control_plane:
+  nodeAffinityPreset:
+    key: "drycc.cc/node"
+    type: "soft"
+    values:
+    - "true"
+  podAffinityPreset:
+    type: ""
+    extraMatchLabels:
+      security: "drycc-security"
+  podAntiAffinityPreset:
+    type: "soft"
+    extraMatchLabels:
+      app: "drycc-quickwit-control-plane"
+  replicas: 1
+  resources: {}
+  extraArgs: {}
+
+indexer:
+  nodeAffinityPreset:
+    key: "drycc.cc/node"
+    type: "soft"
+    values:
+    - "true"
+  podAffinityPreset:
+    type: ""
+    extraMatchLabels:
+      security: "drycc-security"
+  podAntiAffinityPreset:
+    type: "soft"
+    extraMatchLabels:
+      app: "drycc-quickwit-indexer"
+  replicas: 1
+  resources: {}
+  extraArgs: {}
+  persistence:
+    enabled: false
+    size: 5Gi
+    storageClass: ""
+
+janitor:
+  nodeAffinityPreset:
+    key: "drycc.cc/node"
+    type: "soft"
+    values:
+    - "true"
+  podAffinityPreset:
+    type: ""
+    extraMatchLabels:
+      security: "drycc-security"
+  podAntiAffinityPreset:
+    type: "soft"
+    extraMatchLabels:
+      app: "drycc-quickwit-janitor"
+  replicas: 1
+  resources: {}
+  extraArgs: {}
+
+metastore:
+  nodeAffinityPreset:
+    key: "drycc.cc/node"
+    type: "soft"
+    values:
+    - "true"
+  podAffinityPreset:
+    type: ""
+    extraMatchLabels:
+      security: "drycc-security"
+  podAntiAffinityPreset:
+    type: "soft"
+    extraMatchLabels:
+      app: "drycc-quickwit-metastore"
+  replicas: 1
+  resources: {}
+  extraArgs: {}
+
+searcher:
+  nodeAffinityPreset:
+    key: "drycc.cc/node"
+    type: "soft"
+    values:
+    - "true"
+  podAffinityPreset:
+    type: ""
+    extraMatchLabels:
+      security: "drycc-security"
+  podAntiAffinityPreset:
+    type: "soft"
+    extraMatchLabels:
+      app: "drycc-quickwit-searcher"
+  replicas: 1
+  resources: {}
+  extraArgs: {}
+  persistence:
+    enabled: false
+    size: 5Gi
+    storageClass: ""
+
+database:
+  enabled: true
+
+storage:
+  enabled: true
+
+global:
+  # Admin email, used for each component to send email to administrator
+  email: "drycc@drycc.cc"
+  # A domain name consists of one or more parts.
+  # Periods (.) are used to separate these parts.
+  # Each part must be 1 to 63 characters in length and can contain lowercase letters, digits, and hyphens (-).
+  # It must start and end with a lowercase letter or digit.
+  clusterDomain: "cluster.local"

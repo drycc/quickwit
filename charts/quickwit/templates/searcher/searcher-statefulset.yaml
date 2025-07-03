@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: drycc-quickwit-searcher
+  labels:
+    app: drycc-quickwit
+    heritage: drycc
+    component: drycc-quickwit-searcher
+spec:
+  replicas: {{ .Values.searcher.replicas }}
+  selector:
+    matchLabels:
+      app: drycc-quickwit
+      component: drycc-quickwit-searcher
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app: drycc-quickwit
+        component: drycc-quickwit-searcher
+    spec:
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.searcher.podAffinityPreset.type "component" "" "extraMatchLabels" .Values.searcher.podAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.searcher.podAntiAffinityPreset.type "component" "" "extraMatchLabels" .Values.searcher.podAntiAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.searcher.nodeAffinityPreset.type "key" .Values.searcher.nodeAffinityPreset.key "values" .Values.searcher.nodeAffinityPreset.values ) | nindent 10 }}
+      serviceAccountName: drycc-quickwit
+      containers:
+      - name: drycc-quickwit-searcher
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/quickwit:{{.Values.imageTag}}
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        {{- if .Values.diagnosticMode.enabled }}
+        command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 10 }}
+        args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 10 }}
+        {{- else }}
+        args:
+        - run
+        - --service
+        - searcher
+        {{- if .Values.searcher.extraArgs }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.searcher.extraArgs "context" $) | nindent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- with index .Values "searcher" "resources" }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- include "quickwit.ports" . | nindent 8 }}
+        startupProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+          failureThreshold: 12
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+        readinessProbe:
+          httpGet:
+            path: /health/readyz
+            port: rest
+        {{- include "quickwit.envs" . | indent 8 }}
+        volumeMounts:
+        - name: quickwit-config
+          readOnly: true
+          mountPath: /opt/drycc/quickwit/config
+        {{- if .Values.searcher.persistence.enabled }}
+        - name: quickwit-searcher-data
+          mountPath: /data
+        {{- end }}
+      volumes:
+      - name: quickwit-config
+        configMap:
+          name: quickwit-config
+      name: quickwit-searcher-data
+  {{- if .Values.searcher.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: quickwit-searcher-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.searcher.persistence.storageClass }}
+      {{- if (eq "-" .Values.searcher.persistence.storageClass) }}
+      storageClassName: ""
+      {{- else }}
+      storageClassName: "{{ .Values.searcher.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.searcher.persistence.size | quote }}
+  {{- end }}

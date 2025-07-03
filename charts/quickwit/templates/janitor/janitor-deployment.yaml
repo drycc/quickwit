@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drycc-quickwit-janitor
+  labels:
+    app: drycc-quickwit
+    heritage: drycc
+    component: drycc-quickwit-janitor
+spec:
+  replicas: {{ .Values.janitor.replicas }}
+  selector:
+    matchLabels:
+      app: drycc-quickwit
+      component: drycc-quickwit-janitor
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app: drycc-quickwit
+        component: drycc-quickwit-janitor
+    spec:
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.janitor.podAffinityPreset.type "component" "" "extraMatchLabels" .Values.janitor.podAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.janitor.podAntiAffinityPreset.type "component" "" "extraMatchLabels" .Values.janitor.podAntiAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.janitor.nodeAffinityPreset.type "key" .Values.janitor.nodeAffinityPreset.key "values" .Values.janitor.nodeAffinityPreset.values ) | nindent 10 }}
+      serviceAccountName: drycc-quickwit
+      containers:
+      - name: drycc-quickwit-janitor
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/quickwit:{{.Values.imageTag}}
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        {{- if .Values.diagnosticMode.enabled }}
+        command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 10 }}
+        args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 10 }}
+        {{- else }}
+        args:
+        - run
+        - --service
+        - janitor
+        {{- if .Values.janitor.extraArgs }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.janitor.extraArgs "context" $) | nindent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- with index .Values "janitor" "resources" }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- include "quickwit.ports" . | nindent 8 }}
+        startupProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+          failureThreshold: 12
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+        readinessProbe:
+          httpGet:
+            path: /health/readyz
+            port: rest
+        {{- include "quickwit.envs" . | indent 8 }}
+        volumeMounts:
+        - name: quickwit-config
+          readOnly: true
+          mountPath: /opt/drycc/quickwit/config
+        - name: quickwit-janitor-data
+          mountPath: /data
+      volumes:
+      - name: quickwit-config
+        configMap:
+          name: quickwit-config
+      - name: quickwit-janitor-data
+        emptyDir: {}

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: drycc-quickwit
+  labels:
+    app: drycc-quickwit
+    heritage: drycc
+spec:
+  clusterIP: None
+  selector:
+    app: drycc-quickwit
+  publishNotReadyAddresses: true
+  ports:
+  - name: udp
+    port: 7282
+    protocol: UDP
+  - name: tcp-http
+    port: 7280
+    protocol: TCP
+  - name: tcp-grpc
+    port: 7281
+    protocol: TCP

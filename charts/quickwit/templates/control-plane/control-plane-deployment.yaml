@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drycc-quickwit-control-plane
+  labels:
+    app: drycc-quickwit
+    heritage: drycc
+    component: drycc-quickwit-control-plane
+spec:
+  replicas: {{ .Values.control_plane.replicas }}
+  selector:
+    matchLabels:
+      app: drycc-quickwit
+      component: drycc-quickwit-control-plane
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app: drycc-quickwit
+        component: drycc-quickwit-control-plane
+    spec:
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.control_plane.podAffinityPreset.type "component" "" "extraMatchLabels" .Values.control_plane.podAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.control_plane.podAntiAffinityPreset.type "component" "" "extraMatchLabels" .Values.control_plane.podAntiAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.control_plane.nodeAffinityPreset.type "key" .Values.control_plane.nodeAffinityPreset.key "values" .Values.control_plane.nodeAffinityPreset.values ) | nindent 10 }}
+      serviceAccountName: drycc-quickwit
+      containers:
+      - name: drycc-quickwit-control-plane
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/quickwit:{{.Values.imageTag}}
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        {{- if .Values.diagnosticMode.enabled }}
+        command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 10 }}
+        args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 10 }}
+        {{- else }}
+        args:
+        - run
+        - --service
+        - control-plane
+        {{- if .Values.control_plane.extraArgs }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.control_plane.extraArgs "context" $) | nindent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- with index .Values "control_plane" "resources" }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- include "quickwit.ports" . | nindent 8 }}
+        startupProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+          failureThreshold: 12
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+        readinessProbe:
+          httpGet:
+            path: /health/readyz
+            port: rest
+        {{- include "quickwit.envs" . | indent 8 }}
+        volumeMounts:
+        - name: quickwit-config
+          readOnly: true
+          mountPath: /opt/drycc/quickwit/config
+        - name: quickwit-control-plane-data
+          mountPath: /data
+      volumes:
+      - name: quickwit-config
+        configMap:
+          name: quickwit-config
+      - name: quickwit-control-plane-data
+        emptyDir: {}

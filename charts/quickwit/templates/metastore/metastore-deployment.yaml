@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drycc-quickwit-metastore
+  labels:
+    app: drycc-quickwit
+    heritage: drycc
+    component: drycc-quickwit-metastore
+spec:
+  replicas: {{ .Values.metastore.replicas }}
+  selector:
+    matchLabels:
+      app: drycc-quickwit
+      component: drycc-quickwit-metastore
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app: drycc-quickwit
+        component: drycc-quickwit-metastore
+    spec:
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.metastore.podAffinityPreset.type "component" "" "extraMatchLabels" .Values.metastore.podAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.metastore.podAntiAffinityPreset.type "component" "" "extraMatchLabels" .Values.metastore.podAntiAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.metastore.nodeAffinityPreset.type "key" .Values.metastore.nodeAffinityPreset.key "values" .Values.metastore.nodeAffinityPreset.values ) | nindent 10 }}
+      serviceAccountName: drycc-quickwit
+      containers:
+      - name: drycc-quickwit-metastore
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/quickwit:{{.Values.imageTag}}
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        {{- if .Values.diagnosticMode.enabled }}
+        command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 10 }}
+        args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 10 }}
+        {{- else }}
+        args:
+        - run
+        - --service
+        - metastore
+        {{- if .Values.metastore.extraArgs }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.metastore.extraArgs "context" $) | nindent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- with index .Values "metastore" "resources" }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- include "quickwit.ports" . | nindent 8 }}
+        startupProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+          failureThreshold: 12
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health/livez
+            port: rest
+        readinessProbe:
+          httpGet:
+            path: /health/readyz
+            port: rest
+        {{- include "quickwit.envs" . | indent 8 }}
+        volumeMounts:
+        - name: quickwit-config
+          readOnly: true
+          mountPath: /opt/drycc/quickwit/config
+        - name: quickwit-metastore-data
+          mountPath: /data
+      volumes:
+      - name: quickwit-config
+        configMap:
+          name: quickwit-config
+      - name: quickwit-metastore-data
+        emptyDir: {}

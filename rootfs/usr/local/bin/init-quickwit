@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -e
+
+. init-stack
+
+mc config host add storage \
+  "${DRYCC_STORAGE_ENDPOINT}" \
+  "${DRYCC_STORAGE_ACCESSKEY}" \
+  "${DRYCC_STORAGE_SECRETKEY}" \
+  --lookup "${DRYCC_STORAGE_LOOKUP}" \
+  --api s3v4
+
+has_bucket(){
+    mc ls storage -json|jq -r '.key'|grep -w "${DRYCC_STORAGE_BUCKET}"
+}
+
+mc ping storage -x
+
+if  [ -z "$(has_bucket)" ] ;then
+    mc mb storage/"${DRYCC_STORAGE_BUCKET}"
+    if  [ -z "$(has_bucket)" ] ;then
+        echo "create bucket ${DRYCC_STORAGE_BUCKET} error"
+        exit 1
+    fi
+fi
+echo "create bucket ${DRYCC_STORAGE_BUCKET} success"
+
+AWS_REGION=${DRYCC_STORAGE_ENDPOINT%%.*}
+if [ "$DRYCC_STORAGE_LOOKUP" = "path" ]; then
+    QW_S3_FORCE_PATH_STYLE_ACCESS="true"
+fi
+export AWS_REGION QW_S3_FORCE_PATH_STYLE_ACCESS
+
+quickwit "$@"

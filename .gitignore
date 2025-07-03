@@ -1,0 +1,11 @@
+*~
+*.swp
+*.swo
+.DS_Store
+.vscode
+.idea
+.venv/
+*.prom
+__pycache__
+charts/quickwit/Chart.lock
+charts/quickwit/charts
