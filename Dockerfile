@@ -4,6 +4,7 @@ FROM registry.drycc.cc/drycc/base:${CODENAME}
 ENV DRYCC_UID=1001 \
   DRYCC_GID=1001 \
   DRYCC_HOME_DIR=/data \
+  JQ_VERSION="1.7.1" \
   MC_VERSION="2025.04.03.17.07.56" \
   QUICKWIT_VERSION="0.8.2"
 
@@ -11,6 +12,7 @@ ADD rootfs /
 
 RUN groupadd drycc --gid ${DRYCC_GID} \
   && useradd drycc -u ${DRYCC_UID} -g ${DRYCC_GID} -s /bin/bash -m -d ${DRYCC_HOME_DIR} \
+  && install-stack jq $JQ_VERSION \
   && install-stack mc $MC_VERSION \
   && install-stack quickwit $QUICKWIT_VERSION \
   && rm -rf \

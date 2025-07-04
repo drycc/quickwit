@@ -4,6 +4,7 @@ set -e
 shopt -s expand_aliases
 
 alias mc="init-stack mc"
+alias jq="init-stack jq"
 alias quickwit="init-stack quickwit"
 
 mc config host add storage \
