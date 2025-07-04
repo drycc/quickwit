@@ -63,7 +63,7 @@ data:
   log-indexes-template.json: |
     {
       "version": "0.9",
-      "template_id": "logs",
+      "template_id": "{{ .Values.logIndexTemplateName }}",
       "description": "kubernetes container logs",
       "index_id_patterns": [
         "{{ .Values.logIndexPrefix }}*"

@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: drycc-quickwit-job-upgrade
+  annotations:
+    component.drycc.cc/version: {{ .Values.imageTag }}
+    helm.sh/hook: post-install,post-upgrade,post-rollback
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: drycc-quickwit-init
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/python-dev:latest
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        args:
+          - netcat
+          - -v
+          - -u
+          - $(DRYCC_DATABASE_URL),$(DRYCC_DATABASE_REPLICA_URL)
+        {{- include "quickwit.envs" . | indent 8 }}
+      containers:
+      - name: drycc-quickwit-job-upgrade
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/quickwit:{{.Values.imageTag}}
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        {{- if .Values.diagnosticMode.enabled }}
+        command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 8 }}
+        args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 8 }}
+        {{- else }}
+        command:
+        - init-stack
+        args:
+        - bash
+        - -ec
+        - |
+          QUICKWIT_API="http://drycc-quickwit.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:7280"
+          TEMPLATE_FILE="/opt/drycc/quickwit/config/log-indexes-template.json"
+          response=$(curl -s -o /dev/null -w "%{http_code}" -XGET "$QUICKWIT_API/{{ .Values.logIndexTemplateName }}")
+          if [ "$response" -eq 404 ]; then
+              echo "Template not found, creating new template..."
+              curl -XPOST -d @"$TEMPLATE_FILE" -H "Content-Type: application/json" "$QUICKWIT_API"
+          elif [ "$response" -eq 200 ]; then
+              echo "Template exists, updating..."
+              curl -XPUT -d @"$TEMPLATE_FILE" -H "Content-Type: application/json" "$QUICKWIT_API/{{ .Values.logIndexTemplateName }}"
+          else
+              echo "Unexpected HTTP status: $response"
+              exit 1
+          fi
+        {{- end }}
+        {{- with index .Values "resources" }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- include "quickwit.envs" . | indent 8 }}
+        volumeMounts:
+        - name: quickwit-config
+          readOnly: true
+          mountPath: /opt/drycc/quickwit/config
+        - name: quickwit-control-plane-data
+          mountPath: /data
+      volumes:
+      - name: quickwit-config
+        configMap:
+          name: quickwit-config
+      - name: quickwit-control-plane-data
+        emptyDir: {}
+      restartPolicy: Never

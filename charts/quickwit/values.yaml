@@ -21,6 +21,7 @@ diagnosticMode:
 # log index config
 logIndexPrefix: logs-
 logIndexRetention: "30 days"
+logIndexTemplateName: "logs"
 
 # databaseUrl are will no longer use the built-in database component
 databaseUrl: ""
