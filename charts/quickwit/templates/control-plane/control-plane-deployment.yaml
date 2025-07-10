@@ -23,6 +23,16 @@ spec:
         podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.control_plane.podAntiAffinityPreset.type "component" "" "extraMatchLabels" .Values.control_plane.podAntiAffinityPreset.extraMatchLabels "topologyKey" "" "context" $) | nindent 10 }}
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.control_plane.nodeAffinityPreset.type "key" .Values.control_plane.nodeAffinityPreset.key "values" .Values.control_plane.nodeAffinityPreset.values ) | nindent 10 }}
       serviceAccountName: drycc-quickwit
+      initContainers:
+      - name: drycc-registry-init
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/python-dev:latest
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        args:
+        - netcat
+        - -v
+        - -u
+        - $(DRYCC_DATABASE_URL),$(DRYCC_STORAGE_ENDPOINT)
+        {{- include "quickwit.envs" . | indent 8 }}
       containers:
       - name: drycc-quickwit-control-plane
         image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/quickwit:{{.Values.imageTag}}
@@ -48,6 +58,7 @@ spec:
           httpGet:
             path: /health/livez
             port: rest
+          initialDelaySeconds: 120
           failureThreshold: 12
           periodSeconds: 5
         livenessProbe:
