@@ -24,7 +24,7 @@ spec:
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.metastore.nodeAffinityPreset.type "key" .Values.metastore.nodeAffinityPreset.key "values" .Values.metastore.nodeAffinityPreset.values ) | nindent 10 }}
       serviceAccountName: drycc-quickwit
       initContainers:
-      - name: drycc-registry-init
+      - name: drycc-quickwit-metastore-init
         image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/python-dev:latest
         imagePullPolicy: {{.Values.imagePullPolicy}}
         args:

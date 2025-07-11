@@ -8,16 +8,20 @@ metadata:
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
   template:
+    metadata:
+      labels:
+        app: drycc-quickwit
+        component: drycc-quickwit-job-upgrade
     spec:
       initContainers:
-      - name: drycc-quickwit-init
+      - name: drycc-quickwit-job-upgrade-init
         image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/python-dev:latest
         imagePullPolicy: {{.Values.imagePullPolicy}}
         args:
-          - netcat
-          - -v
-          - -u
-          - $(DRYCC_DATABASE_URL),$(DRYCC_DATABASE_REPLICA_URL)
+        - netcat
+        - -v
+        - -u
+        - http://drycc-quickwit-indexer:7280
         {{- include "quickwit.envs" . | indent 8 }}
       containers:
       - name: drycc-quickwit-job-upgrade
@@ -33,7 +37,7 @@ spec:
         - bash
         - -ec
         - |
-          QUICKWIT_API="http://drycc-quickwit.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:7280"
+          QUICKWIT_API="http://drycc-quickwit-indexer.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:7280/api/v1/templates"
           TEMPLATE_FILE="/opt/drycc/quickwit/config/log-indexes-template.json"
           response=$(curl -s -o /dev/null -w "%{http_code}" -XGET "$QUICKWIT_API/{{ .Values.logIndexTemplateName }}")
           if [ "$response" -eq 404 ]; then

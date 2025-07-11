@@ -24,14 +24,14 @@ spec:
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.control_plane.nodeAffinityPreset.type "key" .Values.control_plane.nodeAffinityPreset.key "values" .Values.control_plane.nodeAffinityPreset.values ) | nindent 10 }}
       serviceAccountName: drycc-quickwit
       initContainers:
-      - name: drycc-registry-init
+      - name: drycc-quickwit-control-plane-init
         image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/python-dev:latest
         imagePullPolicy: {{.Values.imagePullPolicy}}
         args:
         - netcat
         - -v
         - -u
-        - $(DRYCC_DATABASE_URL),$(DRYCC_STORAGE_ENDPOINT)
+        - http://drycc-quickwit-metastore:7280
         {{- include "quickwit.envs" . | indent 8 }}
       containers:
       - name: drycc-quickwit-control-plane
