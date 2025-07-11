@@ -17,6 +17,7 @@ data:
 
     storage:
       s3:
+        flavor: minio
         access_key_id: ${DRYCC_STORAGE_ACCESSKEY}
         secret_access_key: ${DRYCC_STORAGE_SECRETKEY}
         region: ${AWS_REGION:-us-east-1}
