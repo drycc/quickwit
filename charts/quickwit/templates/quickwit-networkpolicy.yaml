@@ -29,4 +29,11 @@ spec:
           kubernetes.io/metadata.name: {{.Release.Namespace}}
       podSelector:
         matchLabels:
+          app: drycc-victoriametrics
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{.Release.Namespace}}
+      podSelector:
+        matchLabels:
           app: drycc-controller-api
