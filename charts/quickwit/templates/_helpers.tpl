@@ -31,7 +31,7 @@ env:
       name: database-creds
       key: password
 - name: DRYCC_DATABASE_URL
-  value: "postgres://$(DRYCC_PG_USER):$(DRYCC_PG_PASSWORD)@drycc-database.{{.Release.Namespace}}.svc.{{.Values.global.clusterDomain}}:5432/quickwit"
+  value: "postgres://$(DRYCC_PG_USER):$(DRYCC_PG_PASSWORD)@drycc-database:5432/quickwit"
 {{- end }}
 {{- if (.Values.storageEndpoint) }}
 - name: "DRYCC_STORAGE_LOOKUP"
@@ -65,7 +65,7 @@ env:
 - name: "DRYCC_STORAGE_BUCKET"
   value: "quickwit"
 - name: "DRYCC_STORAGE_ENDPOINT"
-  value: {{ printf "http://drycc-storage.%s.svc.%s:9000" .Release.Namespace .Values.global.clusterDomain }}
+  value: http://drycc-storage:9000
 - name: "DRYCC_STORAGE_ACCESSKEY"
   valueFrom:
     secretKeyRef:
@@ -82,11 +82,11 @@ env:
 - name: QW_NODE_ID
   value: "$(POD_NAME)"
 - name: QW_PEER_SEEDS
-  value: drycc-quickwit.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
+  value: drycc-quickwit
 - name: QW_ADVERTISE_ADDRESS
   value: "$(POD_IP)"
 - name: QW_CLUSTER_ENDPOINT
-  value: http://drycc-quickwit-metastore.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:7280
+  value: http://drycc-quickwit-metastore:7280
 {{- end }}
 
 {{/* Generate quickwit ports */}}

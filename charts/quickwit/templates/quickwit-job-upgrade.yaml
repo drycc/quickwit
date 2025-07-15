@@ -37,7 +37,7 @@ spec:
         - bash
         - -ec
         - |
-          QUICKWIT_API="http://drycc-quickwit-indexer.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:7280/api/v1/templates"
+          QUICKWIT_API="http://drycc-quickwit-indexer:7280/api/v1/templates"
           TEMPLATE_FILE="/opt/drycc/quickwit/config/log-indexes-template.json"
           response=$(curl -s -o /dev/null -w "%{http_code}" -XGET "$QUICKWIT_API/{{ .Values.logIndexTemplateName }}")
           if [ "$response" -eq 404 ]; then
