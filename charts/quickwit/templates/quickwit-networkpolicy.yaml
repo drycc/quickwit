@@ -37,3 +37,10 @@ spec:
       podSelector:
         matchLabels:
           app: drycc-controller-api
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{.Release.Namespace}}
+      podSelector:
+        matchLabels:
+          app: drycc-controller-celery
