@@ -116,13 +116,13 @@ data:
                 "fast": true
               },
               {
-                "name": "container_name",
+                "name": "docker_id",
                 "type": "text",
                 "tokenizer": "raw",
                 "fast": true
               },
               {
-                "name": "container_image",
+                "name": "container_name",
                 "type": "text",
                 "tokenizer": "raw",
                 "fast": true
