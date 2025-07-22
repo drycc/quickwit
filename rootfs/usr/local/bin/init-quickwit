@@ -7,17 +7,17 @@ alias mc="init-stack mc"
 alias jq="init-stack jq"
 alias quickwit="init-stack quickwit"
 
-mc config host add storage \
+mc alias set storage \
   "${DRYCC_STORAGE_ENDPOINT}" \
   "${DRYCC_STORAGE_ACCESSKEY}" \
   "${DRYCC_STORAGE_SECRETKEY}" \
-  --lookup "${DRYCC_STORAGE_LOOKUP}" \
-  --api s3v4
+  --path "${DRYCC_STORAGE_PATH_STYLE}"
+
 mc ping storage -x
 mc mb --ignore-existing storage/"${DRYCC_STORAGE_BUCKET}"
 
 AWS_REGION=${DRYCC_STORAGE_ENDPOINT%%.*}
-if [ "$DRYCC_STORAGE_LOOKUP" = "path" ]; then
+if [ "$DRYCC_STORAGE_PATH_STYLE" = "on" ]; then
     QW_S3_FORCE_PATH_STYLE_ACCESS="true"
 fi
 export AWS_REGION QW_S3_FORCE_PATH_STYLE_ACCESS

@@ -26,11 +26,11 @@ logIndexTemplateName: "logs"
 # databaseUrl are will no longer use the built-in database component
 databaseUrl: ""
 # The following parameters will no longer use the built-in storage component.
-storageLookup: ""
 storageBucket: ""
 storageEndpoint: ""
 storageAccesskey: ""
 storageSecretkey: ""
+storagePathStyle: "auto"
 
 control_plane:
   nodeAffinityPreset:

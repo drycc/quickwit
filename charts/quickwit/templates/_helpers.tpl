@@ -34,11 +34,6 @@ env:
   value: "postgres://$(DRYCC_PG_USER):$(DRYCC_PG_PASSWORD)@drycc-database:5432/quickwit"
 {{- end }}
 {{- if (.Values.storageEndpoint) }}
-- name: "DRYCC_STORAGE_LOOKUP"
-  valueFrom:
-    secretKeyRef:
-      name: quickwit-creds
-      key: storage-lookup
 - name: "DRYCC_STORAGE_BUCKET"
   valueFrom:
     secretKeyRef:
@@ -59,9 +54,12 @@ env:
     secretKeyRef:
       name: quickwit-creds
       key: storage-secretkey
+- name: "DRYCC_STORAGE_PATH_STYLE"
+  valueFrom:
+    secretKeyRef:
+      name: quickwit-creds
+      key: storage-path-style
 {{- else if .Values.storage.enabled  }}
-- name: "DRYCC_STORAGE_LOOKUP"
-  value: "path"
 - name: "DRYCC_STORAGE_BUCKET"
   value: "quickwit"
 - name: "DRYCC_STORAGE_ENDPOINT"
@@ -76,6 +74,8 @@ env:
     secretKeyRef:
       name: storage-creds
       key: secretkey
+- name: "DRYCC_STORAGE_PATH_STYLE"
+  value: "on"
 {{- end }}
 - name: QW_CLUSTER_ID
   value: drycc-quickwit
