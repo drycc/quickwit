@@ -75,7 +75,7 @@ env:
       name: storage-creds
       key: secretkey
 - name: "DRYCC_STORAGE_PATH_STYLE"
-  value: "on"
+  value: "true"
 {{- end }}
 - name: QW_CLUSTER_ID
   value: drycc-quickwit

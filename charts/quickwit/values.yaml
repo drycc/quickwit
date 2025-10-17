@@ -30,7 +30,7 @@ storageBucket: ""
 storageEndpoint: ""
 storageAccesskey: ""
 storageSecretkey: ""
-storagePathStyle: "auto"
+storagePathStyle: "true"
 
 control_plane:
   nodeAffinityPreset:
